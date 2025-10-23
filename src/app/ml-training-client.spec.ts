@@ -1,7 +1,23 @@
 import { createRouterTransport, type Transport } from '@connectrpc/connect';
+import { create } from '@bufbuild/protobuf';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MLTrainingService } from '../gen/app/mltraining/v1/ml_training_connect';
+import { MLTrainingService } from '../gen/app/mltraining/v1/ml_training_pb';
+
 import {
+  CancelTrainingJobRequest,
+  CancelTrainingJobResponseSchema,
+  DeleteCompletedTrainingJobRequest,
+  DeleteCompletedTrainingJobResponseSchema,
+  GetTrainingJobResponseSchema,
+  ListTrainingJobsResponseSchema,
+  ModelType,
+  SubmitCustomTrainingJobResponseSchema,
+  SubmitTrainingJobResponseSchema,
+  TrainingJobMetadataSchema,
+  TrainingStatus,
+} from '../gen/app/mltraining/v1/ml_training_pb';
+
+import type {
   CancelTrainingJobRequest,
   CancelTrainingJobResponse,
   DeleteCompletedTrainingJobRequest,
@@ -14,6 +30,7 @@ import {
   TrainingJobMetadata,
   TrainingStatus,
 } from '../gen/app/mltraining/v1/ml_training_pb';
+
 import { MlTrainingClient } from './ml-training-client';
 vi.mock('../gen/app/mltraining/v1/ml_training_pb_service');
 
@@ -27,7 +44,7 @@ describe('MlTrainingClient tests', () => {
       mockTransport = createRouterTransport(({ service }) => {
         service(MLTrainingService, {
           submitTrainingJob: () => {
-            return new SubmitTrainingJobResponse({
+            return create(SubmitTrainingJobResponseSchema, {
               id: 'fakeId',
             });
           },
@@ -53,7 +70,7 @@ describe('MlTrainingClient tests', () => {
       mockTransport = createRouterTransport(({ service }) => {
         service(MLTrainingService, {
           submitCustomTrainingJob: () => {
-            return new SubmitCustomTrainingJobResponse({
+            return create(SubmitCustomTrainingJobResponseSchema, {
               id: 'fakeId',
             });
           },
@@ -75,7 +92,7 @@ describe('MlTrainingClient tests', () => {
   });
 
   describe('getTrainingJob tests', () => {
-    const metadata: TrainingJobMetadata = new TrainingJobMetadata({
+    const metadata: TrainingJobMetadata = create(TrainingJobMetadataSchema, {
       id: 'id',
       datasetId: 'dataset_id',
       organizationId: 'org_id',
@@ -89,7 +106,7 @@ describe('MlTrainingClient tests', () => {
       mockTransport = createRouterTransport(({ service }) => {
         service(MLTrainingService, {
           getTrainingJob: () => {
-            return new GetTrainingJobResponse({
+            return create(GetTrainingJobResponseSchema, {
               metadata,
             });
           },
@@ -105,7 +122,7 @@ describe('MlTrainingClient tests', () => {
 
   describe('listTrainingJobs', () => {
     const status = TrainingStatus.UNSPECIFIED;
-    const md1 = new TrainingJobMetadata({
+    const md1 = create(TrainingJobMetadataSchema, {
       id: 'id1',
       datasetId: 'dataset_id1',
       organizationId: 'org_id1',
@@ -115,7 +132,7 @@ describe('MlTrainingClient tests', () => {
       syncedModelId: 'synced_model_id1',
     });
 
-    const md2 = new TrainingJobMetadata({
+    const md2 = create(TrainingJobMetadataSchema, {
       id: 'id2',
       datasetId: 'dataset_id2',
       organizationId: 'org_id2',
@@ -130,7 +147,7 @@ describe('MlTrainingClient tests', () => {
       mockTransport = createRouterTransport(({ service }) => {
         service(MLTrainingService, {
           listTrainingJobs: () => {
-            return new ListTrainingJobsResponse({
+            return create(ListTrainingJobsResponseSchema, {
               jobs,
             });
           },
@@ -152,7 +169,7 @@ describe('MlTrainingClient tests', () => {
         service(MLTrainingService, {
           cancelTrainingJob: (req) => {
             capReq = req;
-            return new CancelTrainingJobResponse();
+            return create(CancelTrainingJobResponseSchema);
           },
         });
       });
@@ -171,7 +188,7 @@ describe('MlTrainingClient tests', () => {
         service(MLTrainingService, {
           deleteCompletedTrainingJob: (req) => {
             capReq = req;
-            return new DeleteCompletedTrainingJobResponse();
+            return create(DeleteCompletedTrainingJobResponseSchema);
           },
         });
       });

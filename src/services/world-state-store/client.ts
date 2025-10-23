@@ -1,11 +1,15 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { WorldStateStoreService } from '../../gen/service/worldstatestore/v1/world_state_store_connect';
+import { WorldStateStoreService } from '../../gen/service/worldstatestore/v1/world_state_store_pb';
+
 import {
-  GetTransformRequest,
-  ListUUIDsRequest,
-  StreamTransformChangesRequest,
+  GetTransformRequestSchema,
+  ListUUIDsRequestSchema,
+  StreamTransformChangesRequestSchema,
 } from '../../gen/service/worldstatestore/v1/world_state_store_pb';
+
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
@@ -35,9 +39,9 @@ export class WorldStateStoreClient implements WorldStateStore {
   }
 
   async listUUIDs(extra = {}, callOptions = this.callOptions) {
-    const request = new ListUUIDsRequest({
+    const request = create(ListUUIDsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -47,10 +51,10 @@ export class WorldStateStoreClient implements WorldStateStore {
   }
 
   async getTransform(uuid: string, extra = {}, callOptions = this.callOptions) {
-    const request = new GetTransformRequest({
+    const request = create(GetTransformRequestSchema, {
       name: this.name,
       uuid: uuidFromString(uuid),
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -67,9 +71,9 @@ export class WorldStateStoreClient implements WorldStateStore {
     extra = {},
     callOptions = this.callOptions
   ): AsyncGenerator<TransformChangeEvent, void> {
-    const request = new StreamTransformChangesRequest({
+    const request = create(StreamTransformChangesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);

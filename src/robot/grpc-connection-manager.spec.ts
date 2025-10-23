@@ -5,9 +5,10 @@ import {
   createRouterTransport,
   type Transport,
 } from '@connectrpc/connect';
+import { create } from '@bufbuild/protobuf';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RobotService } from '../gen/robot/v1/robot_connect';
-import { GetOperationsResponse } from '../gen/robot/v1/robot_pb';
+import { RobotService } from '../gen/robot/v1/robot_pb';
+import { GetOperationsResponseSchema } from '../gen/robot/v1/robot_pb';
 import GRPCConnectionManager from './grpc-connection-manager';
 vi.mock('../gen/robot/v1/robot_pb_service');
 
@@ -36,7 +37,7 @@ describe('GPRCConnectionManager', () => {
     mockTransport = createRouterTransport(({ service }) => {
       service(RobotService, {
         getOperations: () => {
-          return new GetOperationsResponse();
+          return create(GetOperationsResponseSchema);
         },
       });
     });
@@ -70,7 +71,7 @@ describe('GPRCConnectionManager', () => {
         getOperations: () => {
           if (!once) {
             once = true;
-            return new GetOperationsResponse();
+            return create(GetOperationsResponseSchema);
           }
           throw ConnectError.from(new Error('disconnected'));
         },

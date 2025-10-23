@@ -1,13 +1,10 @@
 // @vitest-environment happy-dom
 
 import { createClient, createRouterTransport } from '@connectrpc/connect';
+import { create } from '@bufbuild/protobuf';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InputControllerService } from '../../gen/component/inputcontroller/v1/input_controller_connect';
-import {
-  GetEventsResponse,
-  TriggerEventRequest,
-  TriggerEventResponse,
-} from '../../gen/component/inputcontroller/v1/input_controller_pb';
+import { InputControllerService } from '../../gen/component/inputcontroller/v1/input_controller_pb';
+import { GetEventsResponseSchema, TriggerEventRequest, TriggerEventResponseSchema } from '../../gen/component/inputcontroller/v1/input_controller_pb';
 import { RobotClient } from '../../robot';
 import { InputControllerClient } from './client';
 import { InputControllerEvent } from './input-controller';
@@ -30,13 +27,13 @@ describe('InputControllerClient Tests', () => {
     const mockTransport = createRouterTransport(({ service }) => {
       service(InputControllerService, {
         getEvents: () => {
-          return new GetEventsResponse({
+          return create(GetEventsResponseSchema, {
             events: [event],
           });
         },
         triggerEvent: (req) => {
           capturedEvent = req;
-          return new TriggerEventResponse();
+          return create(TriggerEventResponseSchema);
         },
       });
     });

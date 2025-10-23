@@ -4,8 +4,23 @@ import type {
   MethodInfo,
   ServiceType,
 } from '@bufbuild/protobuf';
+import { create } from '@bufbuild/protobuf';
 import { createClientMethodSerializers } from '@connectrpc/connect/protocol';
+
 import {
+  MetadataSchema,
+  PacketMessageSchema,
+  RequestHeadersSchema,
+  RequestMessageSchema,
+  Response,
+  ResponseHeaders,
+  ResponseMessage,
+  ResponseTrailers,
+  Stream,
+  StringsSchema,
+} from '../gen/proto/rpc/webrtc/v1/grpc_pb';
+
+import type {
   Metadata,
   PacketMessage,
   RequestHeaders,
@@ -17,6 +32,7 @@ import {
   Stream,
   Strings,
 } from '../gen/proto/rpc/webrtc/v1/grpc_pb';
+
 import { BaseStream } from './base-stream';
 import type { ClientChannel } from './client-channel';
 import { cloneHeaders } from './dial';
@@ -84,7 +100,7 @@ export abstract class ClientStream<
     );
     this.parseMessage = parse;
     const svcMethod = `/${service.typeName}/${method.name}`;
-    this.requestHeaders = new RequestHeaders({
+    this.requestHeaders = create(RequestHeadersSchema, {
       method: svcMethod,
     });
     const metadataProto = fromGRPCMetadata(cloneHeaders(header));
@@ -131,10 +147,10 @@ export abstract class ClientStream<
   protected writeMessage(eos: boolean, msgBytes?: Uint8Array) {
     try {
       if (!msgBytes || msgBytes.length === 0) {
-        const packetMessage = new PacketMessage({
+        const packetMessage = create(PacketMessageSchema, {
           eom: true,
         });
-        const requestMessage = new RequestMessage({
+        const requestMessage = create(RequestMessageSchema, {
           hasMessage: Boolean(msgBytes),
           packetMessage,
           eos,
@@ -149,13 +165,13 @@ export abstract class ClientStream<
           remMsgBytes.length,
           maxRequestMessagePacketDataSize
         );
-        const packetMessage = new PacketMessage();
+        const packetMessage = create(PacketMessageSchema);
         packetMessage.data = remMsgBytes.slice(0, amountToSend);
         remMsgBytes = remMsgBytes.slice(amountToSend);
         if (remMsgBytes.length === 0) {
           packetMessage.eom = true;
         }
-        const requestMessage = new RequestMessage({
+        const requestMessage = create(RequestMessageSchema, {
           hasMessage: Boolean(remMsgBytes),
           packetMessage,
           eos,
@@ -254,11 +270,11 @@ const fromGRPCMetadata = (headers?: Headers): Metadata | undefined => {
   if (!headers) {
     return undefined;
   }
-  const result = new Metadata({
+  const result = create(MetadataSchema, {
     md: Object.fromEntries(
       [...headers.entries()].map(([key, value]) => [
         key,
-        new Strings({ values: [value] }),
+        create(StringsSchema, { values: [value] }),
       ])
     ),
   });

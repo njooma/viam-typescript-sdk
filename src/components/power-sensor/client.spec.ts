@@ -2,15 +2,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Value } from '@bufbuild/protobuf';
+import { create, fromJson } from '@bufbuild/protobuf';
+import { ValueSchema } from '@bufbuild/protobuf/wkt';
 import { createClient, createRouterTransport } from '@connectrpc/connect';
-import { GetReadingsResponse } from '../../gen/common/v1/common_pb';
-import { PowerSensorService } from '../../gen/component/powersensor/v1/powersensor_connect';
-import {
-  GetCurrentResponse,
-  GetPowerResponse,
-  GetVoltageResponse,
-} from '../../gen/component/powersensor/v1/powersensor_pb';
+import { GetReadingsResponseSchema } from '../../gen/common/v1/common_pb';
+import { PowerSensorService } from '../../gen/component/powersensor/v1/powersensor_pb';
+import { GetCurrentResponseSchema, GetPowerResponseSchema, GetVoltageResponseSchema } from '../../gen/component/powersensor/v1/powersensor_pb';
 import { RobotClient } from '../../robot';
 import { PowerSensorClient } from './client';
 
@@ -25,26 +22,26 @@ describe('PowerSensorClient tests', () => {
     const mockTransport = createRouterTransport(({ service }) => {
       service(PowerSensorService, {
         getVoltage: () => {
-          return new GetVoltageResponse({
+          return create(GetVoltageResponseSchema, {
             volts: testVoltage,
             isAc: testIsAc,
           });
         },
         getCurrent: () => {
-          return new GetCurrentResponse({
+          return create(GetCurrentResponseSchema, {
             amperes: testCurrent,
             isAc: testIsAc,
           });
         },
         getPower: () => {
-          return new GetPowerResponse({
+          return create(GetPowerResponseSchema, {
             watts: testPower,
           });
         },
         getReadings: () => {
-          return new GetReadingsResponse({
+          return create(GetReadingsResponseSchema, {
             readings: {
-              readings: Value.fromJson('readings'),
+              readings: fromJson(ValueSchema, 'readings'),
             },
           });
         },

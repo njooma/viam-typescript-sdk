@@ -1,11 +1,15 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { EncoderService } from '../../gen/component/encoder/v1/encoder_connect';
+import { EncoderService } from '../../gen/component/encoder/v1/encoder_pb';
+
 import {
-  GetPositionRequest,
-  GetPropertiesRequest,
-  ResetPositionRequest,
+  GetPositionRequestSchema,
+  GetPropertiesRequestSchema,
+  ResetPositionRequestSchema,
 } from '../../gen/component/encoder/v1/encoder_pb';
+
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
@@ -29,9 +33,9 @@ export class EncoderClient implements Encoder {
   }
 
   async resetPosition(extra = {}, callOptions = this.callOptions) {
-    const request = new ResetPositionRequest({
+    const request = create(ResetPositionRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -40,9 +44,9 @@ export class EncoderClient implements Encoder {
   }
 
   async getProperties(extra = {}, callOptions = this.callOptions) {
-    const request = new GetPropertiesRequest({
+    const request = create(GetPropertiesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -55,10 +59,10 @@ export class EncoderClient implements Encoder {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetPositionRequest({
+    const request = create(GetPositionRequestSchema, {
       name: this.name,
       positionType,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);

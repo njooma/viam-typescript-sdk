@@ -1,11 +1,9 @@
-import {
-  Struct,
-  type JsonValue,
-  type PartialMessage,
-} from '@bufbuild/protobuf';
+import { type JsonValue, type PartialMessage, create } from '@bufbuild/protobuf';
+import { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions } from '@connectrpc/connect';
 import { apiVersion } from './api-version';
-import { DoCommandRequest, DoCommandResponse } from './gen/common/v1/common_pb';
+import { DoCommandRequestSchema, DoCommandResponse } from './gen/common/v1/common_pb';
+import type { DoCommandRequest, DoCommandResponse } from './gen/common/v1/common_pb';
 import type { Options } from './types';
 
 export const clientHeaders = new Headers({
@@ -25,7 +23,7 @@ export const doCommandFromClient = async function doCommandFromClient(
   options: Options = {},
   callOptions: CallOptions = {}
 ): Promise<JsonValue> {
-  const request = new DoCommandRequest({
+  const request = create(DoCommandRequestSchema, {
     name,
     command,
   });

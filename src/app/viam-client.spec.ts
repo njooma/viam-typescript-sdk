@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Location, RobotPart, SharedSecret_State } from '../gen/app/v1/app_pb';
+import { create } from '@bufbuild/protobuf';
+import { LocationSchema, RobotPartSchema, SharedSecret_State } from '../gen/app/v1/app_pb';
 import { createRobotClient } from '../robot/dial';
 import { AppClient } from './app-client';
 import { BillingClient } from './billing-client';
@@ -112,7 +113,7 @@ describe('ViamClient', () => {
     });
 
     it('gets main part address', async () => {
-      const MAIN_PART = new RobotPart({
+      const MAIN_PART = create(RobotPartSchema, {
         mainPart: true,
         fqdn: 'main.part.fqdn',
       });
@@ -120,7 +121,7 @@ describe('ViamClient', () => {
       const robotParts = [MAIN_PART];
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < 1000; i++) {
-        const part = new RobotPart({
+        const part = create(RobotPartSchema, {
           mainPart: false,
         });
         robotParts.push(part);
@@ -144,7 +145,7 @@ describe('ViamClient', () => {
       options = { credentials: testCredential };
       const client = await subject();
 
-      const MAIN_PART = new RobotPart({
+      const MAIN_PART = create(RobotPartSchema, {
         mainPart: true,
       });
       const robotParts = [MAIN_PART];
@@ -160,7 +161,7 @@ describe('ViamClient', () => {
       options = { credentials: testAccessToken };
       const client = await subject();
 
-      const location = new Location({
+      const location = create(LocationSchema, {
         auth: {
           secrets: [
             {
@@ -204,7 +205,7 @@ describe('ViamClient', () => {
       options = { credentials: testAccessToken };
       const client = await subject();
 
-      const MAIN_PART = new RobotPart({
+      const MAIN_PART = create(RobotPartSchema, {
         mainPart: true,
         locationId: 'location-id',
         fqdn: 'main-part.fqdn',
@@ -213,7 +214,7 @@ describe('ViamClient', () => {
       const getRobotPartsMock = vi.fn().mockImplementation(() => robotParts);
       AppClient.prototype.getRobotParts = getRobotPartsMock;
 
-      const location = new Location({
+      const location = create(LocationSchema, {
         auth: {
           secrets: [
             {

@@ -1,22 +1,26 @@
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 
-import { Duration, Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { Duration, StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Duration, Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { BoardService } from '../../gen/component/board/v1/board_connect';
+import { BoardService } from '../../gen/component/board/v1/board_pb';
+
 import {
-  GetDigitalInterruptValueRequest,
-  GetGPIORequest,
-  PWMFrequencyRequest,
-  PWMRequest,
-  ReadAnalogReaderRequest,
-  SetGPIORequest,
-  SetPWMFrequencyRequest,
-  SetPWMRequest,
-  SetPowerModeRequest,
-  StreamTicksRequest,
-  WriteAnalogRequest,
+  GetDigitalInterruptValueRequestSchema,
+  GetGPIORequestSchema,
+  PWMFrequencyRequestSchema,
+  PWMRequestSchema,
+  ReadAnalogReaderRequestSchema,
+  SetGPIORequestSchema,
+  SetPWMFrequencyRequestSchema,
+  SetPWMRequestSchema,
+  SetPowerModeRequestSchema,
+  StreamTicksRequestSchema,
+  WriteAnalogRequestSchema,
 } from '../../gen/component/board/v1/board_pb';
+
 import { doCommandFromClient } from '../../utils';
 import { type Board, type PowerMode, type Tick } from './board';
 
@@ -43,11 +47,11 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new SetGPIORequest({
+    const request = create(SetGPIORequestSchema, {
       name: this.name,
       pin,
       high,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -56,10 +60,10 @@ export class BoardClient implements Board {
   }
 
   async getGPIO(pin: string, extra = {}, callOptions = this.callOptions) {
-    const request = new GetGPIORequest({
+    const request = create(GetGPIORequestSchema, {
       name: this.name,
       pin,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -69,10 +73,10 @@ export class BoardClient implements Board {
   }
 
   async getPWM(pin: string, extra = {}, callOptions = this.callOptions) {
-    const request = new PWMRequest({
+    const request = create(PWMRequestSchema, {
       name: this.name,
       pin,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -87,11 +91,11 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new SetPWMRequest({
+    const request = create(SetPWMRequestSchema, {
       name: this.name,
       pin,
       dutyCyclePct: dutyCyle,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -104,10 +108,10 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new PWMFrequencyRequest({
+    const request = create(PWMFrequencyRequestSchema, {
       name: this.name,
       pin,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -122,11 +126,11 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new SetPWMFrequencyRequest({
+    const request = create(SetPWMFrequencyRequestSchema, {
       name: this.name,
       pin,
       frequencyHz: frequencyHz ? BigInt(frequencyHz) : undefined,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -139,10 +143,10 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new ReadAnalogReaderRequest({
+    const request = create(ReadAnalogReaderRequestSchema, {
       boardName: this.name,
       analogReaderName: analogReader,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -156,11 +160,11 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new WriteAnalogRequest({
+    const request = create(WriteAnalogRequestSchema, {
       name: this.name,
       pin,
       value,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -173,10 +177,10 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetDigitalInterruptValueRequest({
+    const request = create(GetDigitalInterruptValueRequestSchema, {
       boardName: this.name,
       digitalInterruptName,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -194,10 +198,10 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new StreamTicksRequest({
+    const request = create(StreamTicksRequestSchema, {
       name: this.name,
       pinNames: interrupts,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
     this.options.requestLogger?.(request);
     const stream = this.client.streamTicks(request, callOptions);
@@ -217,11 +221,11 @@ export class BoardClient implements Board {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new SetPowerModeRequest({
+    const request = create(SetPowerModeRequestSchema, {
       name: this.name,
       powerMode,
       duration,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);

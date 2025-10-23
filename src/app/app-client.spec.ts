@@ -1,12 +1,14 @@
 import * as pb from '../gen/app/v1/app_pb';
 
-import { Struct, Timestamp, type PartialMessage } from '@bufbuild/protobuf';
+import { type PartialMessage, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema, TimestampSchema } from '@bufbuild/protobuf/wkt';
 import { createRouterTransport, type Transport } from '@connectrpc/connect';
 import { createWritableIterable } from '@connectrpc/connect/protocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PackageType } from '../gen/app/packages/v1/packages_pb';
-import { AppService } from '../gen/app/v1/app_connect';
-import { LogEntry } from '../gen/common/v1/common_pb';
+import { AppService } from '../gen/app/v1/app_pb';
+import { LogEntrySchema } from '../gen/common/v1/common_pb';
+import type { LogEntry } from '../gen/common/v1/common_pb';
 import { AppClient, createAuth } from './app-client';
 vi.mock('../gen/app/v1/app_pb_service');
 
@@ -23,11 +25,11 @@ describe('AppClient tests', () => {
     name: 'name',
     defaultRegion: 'region',
     publicNamespace: 'namespace',
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
   });
 
   const location = new pb.Location({
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     id: 'id',
     name: 'name',
     robotCount: 3,
@@ -35,7 +37,7 @@ describe('AppClient tests', () => {
   });
 
   const sharedSecret = new pb.SharedSecret({
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     state: 2,
     secret: 'super-secret',
     id: 'id',
@@ -47,7 +49,7 @@ describe('AppClient tests', () => {
   });
 
   const robot = new pb.Robot({
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     id: 'id',
     location: 'location',
     name: 'name',
@@ -62,7 +64,7 @@ describe('AppClient tests', () => {
 
   const robotPart = new pb.RobotPart({
     locationId: 'locId',
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     name: 'name',
     id: 'id',
     robot: 'robot',
@@ -71,7 +73,7 @@ describe('AppClient tests', () => {
     fqdn: 'fqdn',
   });
 
-  const logEntry = new LogEntry({
+  const logEntry = create(LogEntrySchema, {
     level: 'debug',
     loggerName: 'logger',
   });
@@ -79,13 +81,13 @@ describe('AppClient tests', () => {
   const apiKey = new pb.APIKey({
     id: 'id',
     name: 'name',
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     key: 'key',
   });
 
   const fragment = new pb.Fragment({
     id: 'id',
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     public: true,
     name: 'name',
   });
@@ -97,7 +99,7 @@ describe('AppClient tests', () => {
   const partHistory = new pb.RobotPartHistoryEntry({
     old: robotPart,
     part: 'part',
-    when: new Timestamp(),
+    when: create(TimestampSchema),
     robot: 'robot',
   });
 
@@ -113,7 +115,7 @@ describe('AppClient tests', () => {
   const invite = new pb.OrganizationInvite({
     email: 'email',
     organizationId: 'id',
-    createdOn: new Timestamp(),
+    createdOn: create(TimestampSchema),
     authorizations: [authorization],
   });
 
@@ -339,7 +341,7 @@ describe('AppClient tests', () => {
   describe('listOrganizationMembers tests', () => {
     const orgMember = new pb.OrganizationMember({
       userId: 'id',
-      dateAdded: new Timestamp(),
+      dateAdded: create(TimestampSchema),
       emails: ['email'],
     });
     const members = [orgMember];
@@ -864,7 +866,7 @@ describe('AppClient tests', () => {
         logs: [logEntry],
       });
 
-      const logEntry2 = new LogEntry({
+      const logEntry2 = create(LogEntrySchema, {
         ...logEntry,
         loggerName: 'newLoggerName',
         level: 'error',
@@ -926,7 +928,7 @@ describe('AppClient tests', () => {
       const response = await subject().updateRobotPart(
         'id',
         'name',
-        new Struct()
+        create(StructSchema)
       );
       expect(response).toEqual(robotPart);
     });
@@ -1268,7 +1270,7 @@ describe('AppClient tests', () => {
       const response = await subject().createFragment(
         'orgId',
         'name',
-        new Struct()
+        create(StructSchema)
       );
       expect(response).toEqual(fragment);
     });
@@ -1291,7 +1293,7 @@ describe('AppClient tests', () => {
       const response = await subject().updateFragment(
         'id',
         'name',
-        new Struct()
+        create(StructSchema)
       );
       expect(response).toEqual(fragment);
     });
@@ -1838,7 +1840,7 @@ describe('AppClient tests', () => {
 
     it('preserves the map key when a Struct is found', async () => {
       const testResponse = new pb.GetOrganizationMetadataResponse({
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
 
       mockTransport = createRouterTransport(({ service }) => {
@@ -1871,7 +1873,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         organizationId: 'orgId',
-        data: Struct.fromJson({}),
+        data: fromJson(StructSchema, {}),
       });
     });
 
@@ -1880,7 +1882,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         organizationId: 'orgId',
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
     });
   });
@@ -1901,7 +1903,7 @@ describe('AppClient tests', () => {
 
     it('preserves the map key when a Struct is found', async () => {
       const testResponse = new pb.GetLocationMetadataResponse({
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
 
       mockTransport = createRouterTransport(({ service }) => {
@@ -1934,7 +1936,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         locationId: 'locId',
-        data: Struct.fromJson({}),
+        data: fromJson(StructSchema, {}),
       });
     });
 
@@ -1943,7 +1945,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         locationId: 'locId',
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
     });
   });
@@ -1964,7 +1966,7 @@ describe('AppClient tests', () => {
 
     it('preserves the map key when a Struct is found', async () => {
       const testResponse = new pb.GetRobotMetadataResponse({
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
 
       mockTransport = createRouterTransport(({ service }) => {
@@ -1997,7 +1999,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         id: 'robotId',
-        data: Struct.fromJson({}),
+        data: fromJson(StructSchema, {}),
       });
     });
 
@@ -2006,7 +2008,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         id: 'robotId',
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
     });
   });
@@ -2027,7 +2029,7 @@ describe('AppClient tests', () => {
 
     it('preserves the map key when a Struct is found', async () => {
       const testResponse = new pb.GetRobotPartMetadataResponse({
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
 
       mockTransport = createRouterTransport(({ service }) => {
@@ -2060,7 +2062,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         id: 'robotPartId',
-        data: Struct.fromJson({}),
+        data: fromJson(StructSchema, {}),
       });
     });
 
@@ -2071,7 +2073,7 @@ describe('AppClient tests', () => {
 
       expect(capturedRequest).toEqual({
         id: 'robotPartId',
-        data: Struct.fromJson({ key1: 'value1' }),
+        data: fromJson(StructSchema, { key1: 'value1' }),
       });
     });
   });

@@ -1,18 +1,22 @@
 // @vitest-environment happy-dom
 
 import { createClient, createRouterTransport } from '@connectrpc/connect';
-import { Struct } from '@bufbuild/protobuf';
+import { create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { VisionService } from '../../gen/service/vision/v1/vision_connect';
+import { VisionService } from '../../gen/service/vision/v1/vision_pb';
+
 import {
-  CaptureAllFromCameraResponse,
-  GetClassificationsFromCameraResponse,
-  GetClassificationsResponse,
-  GetDetectionsFromCameraResponse,
-  GetDetectionsResponse,
-  GetObjectPointCloudsResponse,
-  GetPropertiesResponse,
+  CaptureAllFromCameraResponseSchema,
+  GetClassificationsFromCameraResponseSchema,
+  GetClassificationsResponseSchema,
+  GetDetectionsFromCameraResponseSchema,
+  GetDetectionsResponseSchema,
+  GetObjectPointCloudsResponseSchema,
+  GetPropertiesResponseSchema,
 } from '../../gen/service/vision/v1/vision_pb';
+
 import { RobotClient } from '../../robot';
 import { VisionClient } from './client';
 import { Classification, Detection, PointCloudObject } from './types';
@@ -42,32 +46,32 @@ const pco: PointCloudObject = new PointCloudObject({
   geometries: undefined,
 });
 
-const extra: Struct = Struct.fromJson({ key: 'value' });
+const extra: Struct = fromJson(StructSchema, { key: 'value' });
 
 describe('VisionClient Tests', () => {
   beforeEach(() => {
     const mockTransport = createRouterTransport(({ service }) => {
       service(VisionService, {
         getDetections: () =>
-          new GetDetectionsResponse({ detections: [detection] }),
+          create(GetDetectionsResponseSchema, { detections: [detection] }),
         getDetectionsFromCamera: () =>
-          new GetDetectionsFromCameraResponse({ detections: [detection] }),
+          create(GetDetectionsFromCameraResponseSchema, { detections: [detection] }),
         getClassifications: () =>
-          new GetClassificationsResponse({ classifications: [classification] }),
+          create(GetClassificationsResponseSchema, { classifications: [classification] }),
         getClassificationsFromCamera: () =>
-          new GetClassificationsFromCameraResponse({
+          create(GetClassificationsFromCameraResponseSchema, {
             classifications: [classification],
           }),
         getObjectPointClouds: () =>
-          new GetObjectPointCloudsResponse({ objects: [pco] }),
+          create(GetObjectPointCloudsResponseSchema, { objects: [pco] }),
         getProperties: () =>
-          new GetPropertiesResponse({
+          create(GetPropertiesResponseSchema, {
             classificationsSupported: true,
             detectionsSupported: true,
             objectPointCloudsSupported: true,
           }),
         captureAllFromCamera: () =>
-          new CaptureAllFromCameraResponse({
+          create(CaptureAllFromCameraResponseSchema, {
             classifications: [classification],
             detections: [detection],
             objects: [pco],

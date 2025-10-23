@@ -1,12 +1,10 @@
 import type { CallOptions, Client } from '@connectrpc/connect';
+import { create } from '@bufbuild/protobuf';
 import type { FlatTensors, MLModel } from './ml-model';
 import { Struct, type Options } from '../../types';
 import type { RobotClient } from '../../robot';
-import {
-  InferRequest,
-  MetadataRequest,
-} from '../../gen/service/mlmodel/v1/mlmodel_pb';
-import { MLModelService } from '../../gen/service/mlmodel/v1/mlmodel_connect';
+import { InferRequestSchema, MetadataRequestSchema } from '../../gen/service/mlmodel/v1/mlmodel_pb';
+import { MLModelService } from '../../gen/service/mlmodel/v1/mlmodel_pb';
 
 export class MLModelClient implements MLModel {
   private client: Client<typeof MLModelService>;
@@ -22,7 +20,7 @@ export class MLModelClient implements MLModel {
   }
 
   async metadata(extra = {}, callOptions = this.callOptions) {
-    const request = new MetadataRequest({
+    const request = create(MetadataRequestSchema, {
       name: this.name,
       extra: Struct.fromJson(extra),
     });
@@ -37,7 +35,7 @@ export class MLModelClient implements MLModel {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new InferRequest({
+    const request = create(InferRequestSchema, {
       name: this.name,
       inputTensors,
       extra: Struct.fromJson(extra),

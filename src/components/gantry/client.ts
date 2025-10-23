@@ -1,19 +1,23 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { GantryService } from '../../gen/component/gantry/v1/gantry_connect';
+import { GantryService } from '../../gen/component/gantry/v1/gantry_pb';
+
 import {
-  GetLengthsRequest,
-  GetPositionRequest,
-  HomeRequest,
-  IsMovingRequest,
-  MoveToPositionRequest,
-  StopRequest,
+  GetLengthsRequestSchema,
+  GetPositionRequestSchema,
+  HomeRequestSchema,
+  IsMovingRequestSchema,
+  MoveToPositionRequestSchema,
+  StopRequestSchema,
 } from '../../gen/component/gantry/v1/gantry_pb';
+
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
 import type { Gantry } from './gantry';
-import { GetGeometriesRequest } from '../../gen/common/v1/common_pb';
+import { GetGeometriesRequestSchema } from '../../gen/common/v1/common_pb';
 
 /**
  * A gRPC-web client for the Gantry component.
@@ -33,9 +37,9 @@ export class GantryClient implements Gantry {
   }
 
   async getGeometries(extra = {}, callOptions = this.callOptions) {
-    const request = new GetGeometriesRequest({
+    const request = create(GetGeometriesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     const response = await this.client.getGeometries(request, callOptions);
@@ -43,9 +47,9 @@ export class GantryClient implements Gantry {
   }
 
   async getPosition(extra = {}, callOptions = this.callOptions) {
-    const request = new GetPositionRequest({
+    const request = create(GetPositionRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -60,11 +64,11 @@ export class GantryClient implements Gantry {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new MoveToPositionRequest({
+    const request = create(MoveToPositionRequestSchema, {
       name: this.name,
       positionsMm,
       speedsMmPerSec,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -73,9 +77,9 @@ export class GantryClient implements Gantry {
   }
 
   async home(extra = {}, callOptions = this.callOptions) {
-    const request = new HomeRequest({
+    const request = create(HomeRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -85,9 +89,9 @@ export class GantryClient implements Gantry {
   }
 
   async getLengths(extra = {}, callOptions = this.callOptions) {
-    const request = new GetLengthsRequest({
+    const request = create(GetLengthsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -97,9 +101,9 @@ export class GantryClient implements Gantry {
   }
 
   async stop(extra = {}, callOptions = this.callOptions) {
-    const request = new StopRequest({
+    const request = create(StopRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -108,7 +112,7 @@ export class GantryClient implements Gantry {
   }
 
   async isMoving(callOptions = this.callOptions) {
-    const request = new IsMovingRequest({
+    const request = create(IsMovingRequestSchema, {
       name: this.name,
     });
 

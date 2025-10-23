@@ -3,21 +3,24 @@
  */
 
 import { describe, expect, it, vi, type Mock } from 'vitest';
+import { create, fromJson } from '@bufbuild/protobuf';
 import { RobotClient } from '../../robot';
 vi.mock('../../gen/service/motion/v1/motion_pb_service');
 vi.mock('../../robot');
 
-import { Struct, Timestamp } from '@bufbuild/protobuf';
+import { StructSchema, Timestamp } from '@bufbuild/protobuf/wkt';
 import { createClient, createRouterTransport } from '@connectrpc/connect';
-import { MotionService } from '../../gen/service/motion/v1/motion_connect';
+import { MotionService } from '../../gen/service/motion/v1/motion_pb';
+
 import {
   GetPlanRequest,
   ListPlanStatusesRequest,
   MoveOnGlobeRequest,
-  MoveOnGlobeResponse,
+  MoveOnGlobeResponseSchema,
   MoveRequest,
   StopPlanRequest,
 } from '../../gen/service/motion/v1/motion_pb';
+
 import { GeoGeometry, GeoPoint, Pose, PoseInFrame } from '../../types';
 import { MotionClient } from './client';
 import {
@@ -57,7 +60,7 @@ describe('moveOnGlobe', () => {
       service(MotionService, {
         moveOnGlobe: (req) => {
           capturedReq = req;
-          return new MoveOnGlobeResponse({
+          return create(MoveOnGlobeResponseSchema, {
             executionId: executionId(),
           });
         },
@@ -89,7 +92,7 @@ describe('moveOnGlobe', () => {
     expect(capturedReq?.motionConfiguration).toStrictEqual(
       expectedMotionConfiguration
     );
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
 
     expect(executionId).toHaveBeenCalledOnce();
   });
@@ -171,7 +174,7 @@ describe('moveOnGlobe', () => {
       service(MotionService, {
         moveOnGlobe: (req) => {
           capturedReq = req;
-          return new MoveOnGlobeResponse({
+          return create(MoveOnGlobeResponseSchema, {
             executionId: executionId(),
           });
         },
@@ -209,7 +212,7 @@ describe('moveOnGlobe', () => {
     expect(capturedReq?.motionConfiguration).toStrictEqual(
       expectedMotionConfiguration
     );
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
 
     expect(executionId).toHaveBeenCalledOnce();
   });
@@ -264,7 +267,7 @@ describe('move', () => {
     expect(capturedReq?.destination).toStrictEqual(expectedDestination);
     expect(capturedReq?.componentName).toStrictEqual(expectedComponentName);
     expect(capturedReq?.constraints).toStrictEqual(expectedConstraints);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 });
 
@@ -293,7 +296,7 @@ describe('stopPlan', () => {
       null
     );
     expect(capturedReq?.componentName).toStrictEqual(expectedComponentName);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 
   it('allows optionally specifying extra', async () => {
@@ -319,7 +322,7 @@ describe('stopPlan', () => {
       motion.stopPlan(expectedComponentName, expectedExtra)
     ).resolves.toStrictEqual(null);
     expect(capturedReq?.componentName).toStrictEqual(expectedComponentName);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 });
 
@@ -384,7 +387,7 @@ describe('getPlan', () => {
     expect(capturedReq?.componentName).toStrictEqual(expectedComponentName);
     expect(capturedReq?.lastPlanOnly).toStrictEqual(expectedLastPlanOnly);
     expect(capturedReq?.executionId).toStrictEqual(expectedExecutionID);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 
   it('allows optionally specifying lastPlanOnly, executionID, and extra', async () => {
@@ -419,7 +422,7 @@ describe('getPlan', () => {
     expect(capturedReq?.componentName).toStrictEqual(expectedComponentName);
     expect(capturedReq?.lastPlanOnly).toStrictEqual(expectedLastPlanOnly);
     expect(capturedReq?.executionId).toStrictEqual(expectedExecutionID);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 });
 
@@ -460,7 +463,7 @@ describe('listPlanStatuses', () => {
       expectedResponse
     );
     expect(capturedReq?.onlyActivePlans).toStrictEqual(expectedOnlyActivePlans);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 
   it('allows optionally specifying onlyActivePlans and extra', async () => {
@@ -486,6 +489,6 @@ describe('listPlanStatuses', () => {
       motion.listPlanStatuses(expectedOnlyActivePlans, expectedExtra)
     ).resolves.toStrictEqual(expectedResponse);
     expect(capturedReq?.onlyActivePlans).toStrictEqual(expectedOnlyActivePlans);
-    expect(capturedReq?.extra).toStrictEqual(Struct.fromJson(expectedExtra));
+    expect(capturedReq?.extra).toStrictEqual(fromJson(StructSchema, expectedExtra));
   });
 });

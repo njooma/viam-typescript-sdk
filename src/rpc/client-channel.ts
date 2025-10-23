@@ -5,19 +5,23 @@ import type {
   PartialMessage,
   ServiceType,
 } from '@bufbuild/protobuf';
+import { create, fromBinary } from '@bufbuild/protobuf';
 import type {
   ContextValues,
   StreamResponse,
   Transport,
   UnaryResponse,
 } from '@connectrpc/connect';
+
 import {
-  Request,
+  RequestSchema,
   RequestHeaders,
   RequestMessage,
-  Response,
-  Stream,
+  ResponseSchema,
+  StreamSchema,
 } from '../gen/proto/rpc/webrtc/v1/grpc_pb';
+
+import type { Request, RequestHeaders, RequestMessage, Response, Stream } from '../gen/proto/rpc/webrtc/v1/grpc_pb';
 import { BaseChannel } from './base-channel';
 import type { ClientStream, ClientStreamConstructor } from './client-stream';
 import { ConnectionClosedError } from './connection-closed-error';
@@ -61,7 +65,7 @@ export class ClientChannel extends BaseChannel implements Transport {
   }
 
   private onChannelMessage(event: MessageEvent<ArrayBuffer>) {
-    const resp = Response.fromBinary(new Uint8Array(event.data));
+    const resp = fromBinary(ResponseSchema, new Uint8Array(event.data));
 
     const { stream } = resp;
     if (stream === undefined) {
@@ -81,7 +85,7 @@ export class ClientChannel extends BaseChannel implements Transport {
   private nextStreamID(): Stream {
     const thisId = this.streamIDCounter;
     this.streamIDCounter += 1;
-    return new Stream({
+    return create(StreamSchema, {
       id: BigInt(thisId),
     });
   }
@@ -126,7 +130,7 @@ export class ClientChannel extends BaseChannel implements Transport {
 
   public writeHeaders(stream: Stream, headers: RequestHeaders) {
     this.write(
-      new Request({
+      create(RequestSchema, {
         stream,
         type: {
           case: 'headers',
@@ -138,7 +142,7 @@ export class ClientChannel extends BaseChannel implements Transport {
 
   public writeMessage(stream: Stream, msg: RequestMessage) {
     this.write(
-      new Request({
+      create(RequestSchema, {
         stream,
         type: {
           case: 'message',
@@ -150,7 +154,7 @@ export class ClientChannel extends BaseChannel implements Transport {
 
   public writeReset(stream: Stream) {
     this.write(
-      new Request({
+      create(RequestSchema, {
         stream,
         type: {
           case: 'rstStream',

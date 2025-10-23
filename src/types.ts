@@ -1,4 +1,5 @@
-import { Struct, type JsonValue, type PlainMessage } from '@bufbuild/protobuf';
+import { type JsonValue, type PlainMessage } from '@bufbuild/protobuf';
+import { Struct } from '@bufbuild/protobuf/wkt';
 
 export { Code, ConnectError } from '@connectrpc/connect';
 export { ConnectionClosedError } from './rpc';

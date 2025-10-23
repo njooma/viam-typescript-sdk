@@ -1,20 +1,24 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { ArmService } from '../../gen/component/arm/v1/arm_connect';
+import { ArmService } from '../../gen/component/arm/v1/arm_pb';
+
 import {
-  GetEndPositionRequest,
-  GetJointPositionsRequest,
-  IsMovingRequest,
-  JointPositions,
-  MoveToJointPositionsRequest,
-  MoveToPositionRequest,
-  StopRequest,
+  GetEndPositionRequestSchema,
+  GetJointPositionsRequestSchema,
+  IsMovingRequestSchema,
+  JointPositionsSchema,
+  MoveToJointPositionsRequestSchema,
+  MoveToPositionRequestSchema,
+  StopRequestSchema,
 } from '../../gen/component/arm/v1/arm_pb';
+
 import type { RobotClient } from '../../robot';
 import type { Options, Pose } from '../../types';
 import { doCommandFromClient } from '../../utils';
 import type { Arm } from './arm';
-import { GetGeometriesRequest } from '../../gen/common/v1/common_pb';
+import { GetGeometriesRequestSchema } from '../../gen/common/v1/common_pb';
 
 /**
  * A gRPC-web client for the Arm component.
@@ -34,9 +38,9 @@ export class ArmClient implements Arm {
   }
 
   async getEndPosition(extra = {}, callOptions = this.callOptions) {
-    const request = new GetEndPositionRequest({
+    const request = create(GetEndPositionRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -50,9 +54,9 @@ export class ArmClient implements Arm {
   }
 
   async getGeometries(extra = {}, callOptions = this.callOptions) {
-    const request = new GetGeometriesRequest({
+    const request = create(GetGeometriesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     const response = await this.client.getGeometries(request, callOptions);
@@ -60,10 +64,10 @@ export class ArmClient implements Arm {
   }
 
   async moveToPosition(pose: Pose, extra = {}, callOptions = this.callOptions) {
-    const request = new MoveToPositionRequest({
+    const request = create(MoveToPositionRequestSchema, {
       name: this.name,
       to: pose,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -76,14 +80,14 @@ export class ArmClient implements Arm {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const newJointPositions = new JointPositions({
+    const newJointPositions = create(JointPositionsSchema, {
       values: jointPositionsList,
     });
 
-    const request = new MoveToJointPositionsRequest({
+    const request = create(MoveToJointPositionsRequestSchema, {
       name: this.name,
       positions: newJointPositions,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -92,9 +96,9 @@ export class ArmClient implements Arm {
   }
 
   async getJointPositions(extra = {}, callOptions = this.callOptions) {
-    const request = new GetJointPositionsRequest({
+    const request = create(GetJointPositionsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -109,9 +113,9 @@ export class ArmClient implements Arm {
   }
 
   async stop(extra = {}, callOptions = this.callOptions) {
-    const request = new StopRequest({
+    const request = create(StopRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -120,7 +124,7 @@ export class ArmClient implements Arm {
   }
 
   async isMoving(callOptions = this.callOptions) {
-    const request = new IsMovingRequest({
+    const request = create(IsMovingRequestSchema, {
       name: this.name,
     });
 

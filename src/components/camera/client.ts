@@ -1,19 +1,23 @@
-import { type JsonValue, Struct, Timestamp } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema, TimestampSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct, Timestamp } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { GetPropertiesRequest } from '../../gen/component/base/v1/base_pb';
-import { CameraService } from '../../gen/component/camera/v1/camera_connect';
+import { GetPropertiesRequestSchema } from '../../gen/component/base/v1/base_pb';
+import { CameraService } from '../../gen/component/camera/v1/camera_pb';
+
 import {
   Format,
-  GetImageRequest,
-  GetImagesRequest,
-  GetPointCloudRequest,
-  RenderFrameRequest,
+  GetImageRequestSchema,
+  GetImagesRequestSchema,
+  GetPointCloudRequestSchema,
+  RenderFrameRequestSchema,
 } from '../../gen/component/camera/v1/camera_pb';
+
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
 import type { Camera, MimeType, ResponseMetadata } from './camera';
-import { GetGeometriesRequest } from '../../gen/common/v1/common_pb';
+import { GetGeometriesRequestSchema } from '../../gen/common/v1/common_pb';
 
 const PointCloudPCD: MimeType = 'pointcloud/pcd';
 
@@ -56,9 +60,9 @@ export class CameraClient implements Camera {
   }
 
   async getGeometries(extra = {}, callOptions = this.callOptions) {
-    const request = new GetGeometriesRequest({
+    const request = create(GetGeometriesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     const response = await this.client.getGeometries(request, callOptions);
@@ -70,10 +74,10 @@ export class CameraClient implements Camera {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetImageRequest({
+    const request = create(GetImageRequestSchema, {
       name: this.name,
       mimeType,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -87,10 +91,10 @@ export class CameraClient implements Camera {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetImagesRequest({
+    const request = create(GetImagesRequestSchema, {
       name: this.name,
       filterSourceNames,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -102,7 +106,7 @@ export class CameraClient implements Camera {
       mimeType: image.mimeType || formatToMimeType(image.format),
     }));
     const metadata: ResponseMetadata = {
-      capturedAt: resp.responseMetadata?.capturedAt ?? new Timestamp(),
+      capturedAt: resp.responseMetadata?.capturedAt ?? create(TimestampSchema),
     };
 
     return { images, metadata };
@@ -113,10 +117,10 @@ export class CameraClient implements Camera {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new RenderFrameRequest({
+    const request = create(RenderFrameRequestSchema, {
       name: this.name,
       mimeType,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -126,10 +130,10 @@ export class CameraClient implements Camera {
   }
 
   async getPointCloud(extra = {}, callOptions = this.callOptions) {
-    const request = new GetPointCloudRequest({
+    const request = create(GetPointCloudRequestSchema, {
       name: this.name,
       mimeType: PointCloudPCD,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -139,7 +143,7 @@ export class CameraClient implements Camera {
   }
 
   async getProperties(callOptions = this.callOptions) {
-    const request = new GetPropertiesRequest({
+    const request = create(GetPropertiesRequestSchema, {
       name: this.name,
     });
 

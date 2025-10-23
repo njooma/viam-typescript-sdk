@@ -1,10 +1,12 @@
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { GetReadingsRequest } from '../../gen/common/v1/common_pb';
-import { SensorService } from '../../gen/component/sensor/v1/sensor_connect';
+import { GetReadingsRequestSchema } from '../../gen/common/v1/common_pb';
+import { SensorService } from '../../gen/component/sensor/v1/sensor_pb';
 import { doCommandFromClient } from '../../utils';
 import type { Sensor } from './sensor';
 
@@ -26,9 +28,9 @@ export class SensorClient implements Sensor {
   }
 
   async getReadings(extra = {}, callOptions = this.callOptions) {
-    const request = new GetReadingsRequest({
+    const request = create(GetReadingsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);

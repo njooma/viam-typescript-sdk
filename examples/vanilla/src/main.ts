@@ -38,6 +38,25 @@ const updateConnectionStatus = (eventType: VIAM.MachineConnectionEvent) => {
 };
 
 const connect = async () => {
+  const v = await VIAM.createViamClient({
+    credentials: {
+      type: 'api-key',
+      payload: API_KEY,
+      authEntity: API_KEY_ID,
+    },
+  });
+  const x = new TextEncoder().encode(JSON.stringify({ a: 1 }));
+  const fileId = await v.dataClient.fileUpload(
+    x,
+    'dd772657-5fdd-4f9c-9df1-3474508ab9f5',
+    {
+      fileName: 'naveedtest',
+      fileExtension: '.json',
+      tags: ['naveed-test'],
+    }
+  );
+  console.log(`uploaded: ${fileId}`);
+
   if (machine) {
     await machine.connect();
     return;

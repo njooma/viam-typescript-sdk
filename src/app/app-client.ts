@@ -1,9 +1,47 @@
 import type { JsonValue } from '@bufbuild/protobuf';
-import { Struct } from '@bufbuild/protobuf';
+import { create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import { createClient, type Client, type Transport } from '@connectrpc/connect';
 import { PackageType } from '../gen/app/packages/v1/packages_pb';
-import { AppService } from '../gen/app/v1/app_connect';
+import { AppService } from '../gen/app/v1/app_pb';
+
 import {
+  APIKeyWithAuthorizations,
+  AuthorizationSchema,
+  AuthorizedPermissionsSchema,
+  CreateKeyFromExistingKeyAuthorizationsResponse,
+  CreateKeyResponse,
+  CreateModuleResponse,
+  Fragment,
+  FragmentVisibility,
+  GetAppContentResponse,
+  GetAppBrandingResponse,
+  GetRobotPartLogsResponse,
+  GetRobotPartResponse,
+  GetRobotPartByNameAndLocationResponse,
+  ListOrganizationMembersResponse,
+  Location,
+  LocationAuth,
+  Model,
+  Module,
+  Organization,
+  OrganizationIdentity,
+  OrganizationInvite,
+  OrgDetails,
+  RegistryItem,
+  RegistryItemStatus,
+  Robot,
+  RobotPart,
+  RobotPartHistoryEntry,
+  RotateKeyResponse,
+  RoverRentalRobot,
+  Visibility,
+  ListMachineSummariesRequestSchema,
+  LocationSummary,
+} from '../gen/app/v1/app_pb';
+
+import type {
   APIKeyWithAuthorizations,
   Authorization,
   AuthorizedPermissions,
@@ -37,6 +75,7 @@ import {
   ListMachineSummariesRequest,
   LocationSummary,
 } from '../gen/app/v1/app_pb';
+
 import type { LogEntry } from '../gen/common/v1/common_pb';
 
 /**
@@ -60,7 +99,7 @@ export const createAuth = (
   identityType: string,
   resourceId: string
 ): Authorization => {
-  return new Authorization({
+  return create(AuthorizationSchema, {
     authorizationType: 'role',
     identityId: entityId,
     identityType,
@@ -109,7 +148,7 @@ export const createPermission = (
   resourceId: string,
   permissions: string[]
 ): AuthorizedPermissions => {
-  return new AuthorizedPermissions({
+  return create(AuthorizedPermissionsSchema, {
     resourceType,
     resourceId,
     permissions,
@@ -2062,7 +2101,7 @@ export class AppClient {
   ): Promise<void> {
     await this.client.updateOrganizationMetadata({
       organizationId: id,
-      data: Struct.fromJson(data),
+      data: fromJson(StructSchema, data),
     });
   }
 
@@ -2114,7 +2153,7 @@ export class AppClient {
   ): Promise<void> {
     await this.client.updateLocationMetadata({
       locationId: id,
-      data: Struct.fromJson(data),
+      data: fromJson(StructSchema, data),
     });
   }
 
@@ -2162,7 +2201,7 @@ export class AppClient {
     id: string,
     data: Record<string, JsonValue>
   ): Promise<void> {
-    await this.client.updateRobotMetadata({ id, data: Struct.fromJson(data) });
+    await this.client.updateRobotMetadata({ id, data: fromJson(StructSchema, data) });
   }
 
   /**
@@ -2213,7 +2252,7 @@ export class AppClient {
   ): Promise<void> {
     await this.client.updateRobotPartMetadata({
       id,
-      data: Struct.fromJson(data),
+      data: fromJson(StructSchema, data),
     });
   }
 
@@ -2270,7 +2309,7 @@ export class AppClient {
     locationIds?: string[],
     limit?: number
   ): Promise<LocationSummary[]> {
-    const req: ListMachineSummariesRequest = new ListMachineSummariesRequest({
+    const req: ListMachineSummariesRequest = create(ListMachineSummariesRequestSchema, {
       organizationId,
       fragmentIds,
       locationIds,

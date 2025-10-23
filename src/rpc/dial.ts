@@ -1,4 +1,4 @@
-import { Message } from '@bufbuild/protobuf';
+import { Message, create } from '@bufbuild/protobuf';
 
 import type {
   AnyMessage,
@@ -18,13 +18,11 @@ import { Code, ConnectError, createClient } from '@connectrpc/connect';
 import {
   AuthService,
   ExternalAuthService,
-} from '../gen/proto/rpc/v1/auth_connect';
-import {
-  AuthenticateRequest,
-  Credentials as PBCredentials,
 } from '../gen/proto/rpc/v1/auth_pb';
-import { SignalingService } from '../gen/proto/rpc/webrtc/v1/signaling_connect';
-import { WebRTCConfig } from '../gen/proto/rpc/webrtc/v1/signaling_pb';
+import { AuthenticateRequestSchema, CredentialsSchema as PBCredentialsSchema } from '../gen/proto/rpc/v1/auth_pb';
+import { SignalingService } from '../gen/proto/rpc/webrtc/v1/signaling_pb';
+import { WebRTCConfigSchema } from '../gen/proto/rpc/webrtc/v1/signaling_pb';
+import type { WebRTCConfig } from '../gen/proto/rpc/webrtc/v1/signaling_pb';
 import { newPeerConnectionForClient } from './peer';
 
 import { createGrpcWebTransport } from '@connectrpc/connect-web';
@@ -163,14 +161,14 @@ const makeAuthenticatedTransport = async (
 
   let accessToken;
   if (opts.accessToken === undefined || opts.accessToken === '') {
-    const request = new AuthenticateRequest({
+    const request = create(AuthenticateRequestSchema, {
       entity:
         isCredential(opts.credentials) && opts.credentials.authEntity
           ? opts.credentials.authEntity
           : address.replace(addressCleanupRegex, ''),
     });
     if (opts.credentials) {
-      request.credentials = new PBCredentials({
+      request.credentials = create(PBCredentialsSchema, {
         type: opts.credentials.type,
         payload: opts.credentials.payload,
       });
@@ -196,7 +194,7 @@ const makeAuthenticatedTransport = async (
 
     accessToken = '';
 
-    const request = new AuthenticateRequest({
+    const request = create(AuthenticateRequestSchema, {
       entity: opts.externalAuthToEntity,
     });
     const transport = defaultFactory({
@@ -325,10 +323,10 @@ const getOptionalWebRTCConfig = async (
   const signalingClient = createClient(SignalingService, directTransport);
   try {
     const resp = await signalingClient.optionalWebRTCConfig({}, callOpts);
-    return resp.config ?? new WebRTCConfig();
+    return resp.config ?? create(WebRTCConfigSchema);
   } catch (error) {
     if (error instanceof ConnectError && error.code === Code.Unimplemented) {
-      return new WebRTCConfig();
+      return create(WebRTCConfigSchema);
     }
     throw error;
   }

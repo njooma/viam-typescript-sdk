@@ -1,11 +1,13 @@
-import { type JsonValue, Struct } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { PoseTrackerService } from '../../gen/component/posetracker/v1/pose_tracker_connect';
+import { PoseTrackerService } from '../../gen/component/posetracker/v1/pose_tracker_pb';
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
 import type { PoseTracker } from './pose-tracker';
-import { GetGeometriesRequest } from '../../gen/common/v1/common_pb';
+import { GetGeometriesRequestSchema } from '../../gen/common/v1/common_pb';
 
 /**
  * A gRPC-web client for the Generic component.
@@ -25,9 +27,9 @@ export class PoseTrackerClient implements PoseTracker {
   }
 
   async getGeometries(extra = {}, callOptions = this.callOptions) {
-    const request = new GetGeometriesRequest({
+    const request = create(GetGeometriesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     const response = await this.client.getGeometries(request, callOptions);

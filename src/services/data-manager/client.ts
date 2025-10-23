@@ -1,11 +1,10 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
 import { MimeType } from '../../gen/app/datasync/v1/data_sync_pb.js';
-import { DataManagerService } from '../../gen/service/datamanager/v1/data_manager_connect.js';
-import {
-  SyncRequest,
-  UploadBinaryDataToDatasetsRequest,
-} from '../../gen/service/datamanager/v1/data_manager_pb.js';
+import { DataManagerService } from '../../gen/service/datamanager/v1/data_manager_pb.js';
+import { SyncRequestSchema, UploadBinaryDataToDatasetsRequestSchema } from '../../gen/service/datamanager/v1/data_manager_pb.js';
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 import { doCommandFromClient } from '../../utils';
@@ -43,9 +42,9 @@ export class DataManagerClient implements DataManager {
    * @param callOptions - Call options for the sync request.
    */
   async sync(extra = {}, callOptions = this.callOptions) {
-    const request = new SyncRequest({
+    const request = create(SyncRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -118,13 +117,13 @@ export class DataManagerClient implements DataManager {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new UploadBinaryDataToDatasetsRequest({
+    const request = create(UploadBinaryDataToDatasetsRequestSchema, {
       name: this.name,
       binaryData,
       tags,
       datasetIds,
       mimeType,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
     this.options.requestLogger?.(request);
     await this.client.uploadBinaryDataToDatasets(request, callOptions);

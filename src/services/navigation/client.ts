@@ -1,17 +1,21 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { NavigationService } from '../../gen/service/navigation/v1/navigation_connect';
+import { NavigationService } from '../../gen/service/navigation/v1/navigation_pb';
+
 import {
-  AddWaypointRequest,
-  GetLocationRequest,
-  GetModeRequest,
-  GetObstaclesRequest,
-  GetPathsRequest,
-  GetPropertiesRequest,
-  GetWaypointsRequest,
-  RemoveWaypointRequest,
-  SetModeRequest,
+  AddWaypointRequestSchema,
+  GetLocationRequestSchema,
+  GetModeRequestSchema,
+  GetObstaclesRequestSchema,
+  GetPathsRequestSchema,
+  GetPropertiesRequestSchema,
+  GetWaypointsRequestSchema,
+  RemoveWaypointRequestSchema,
+  SetModeRequestSchema,
 } from '../../gen/service/navigation/v1/navigation_pb';
+
 import { RobotClient } from '../../robot';
 import type { GeoPoint, Options } from '../../types';
 import { isValidGeoPoint } from '../../types';
@@ -37,9 +41,9 @@ export class NavigationClient implements Navigation {
   }
 
   async getMode(extra = {}, callOptions = this.callOptions) {
-    const request = new GetModeRequest({
+    const request = create(GetModeRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -49,10 +53,10 @@ export class NavigationClient implements Navigation {
   }
 
   async setMode(mode: Mode, extra = {}, callOptions = this.callOptions) {
-    const request = new SetModeRequest({
+    const request = create(SetModeRequestSchema, {
       name: this.name,
       mode,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -61,9 +65,9 @@ export class NavigationClient implements Navigation {
   }
 
   async getLocation(extra = {}, callOptions = this.callOptions) {
-    const request = new GetLocationRequest({
+    const request = create(GetLocationRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -80,9 +84,9 @@ export class NavigationClient implements Navigation {
   }
 
   async getWayPoints(extra = {}, callOptions = this.callOptions) {
-    const request = new GetWaypointsRequest({
+    const request = create(GetWaypointsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -96,10 +100,10 @@ export class NavigationClient implements Navigation {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new AddWaypointRequest({
+    const request = create(AddWaypointRequestSchema, {
       name: this.name,
       location,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -108,10 +112,10 @@ export class NavigationClient implements Navigation {
   }
 
   async removeWayPoint(id: string, extra = {}, callOptions = this.callOptions) {
-    const request = new RemoveWaypointRequest({
+    const request = create(RemoveWaypointRequestSchema, {
       name: this.name,
       id,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -120,9 +124,9 @@ export class NavigationClient implements Navigation {
   }
 
   async getObstacles(extra = {}, callOptions = this.callOptions) {
-    const request = new GetObstaclesRequest({
+    const request = create(GetObstaclesRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -132,9 +136,9 @@ export class NavigationClient implements Navigation {
   }
 
   async getPaths(extra = {}, callOptions = this.callOptions) {
-    const request = new GetPathsRequest({
+    const request = create(GetPathsRequestSchema, {
       name: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -144,7 +148,7 @@ export class NavigationClient implements Navigation {
   }
 
   async getProperties(callOptions = this.callOptions) {
-    const request = new GetPropertiesRequest({
+    const request = create(GetPropertiesRequestSchema, {
       name: this.name,
     });
 

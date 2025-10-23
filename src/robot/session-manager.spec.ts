@@ -1,26 +1,24 @@
 // @vitest-environment happy-dom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { create } from '@bufbuild/protobuf';
 import { ConnectionClosedError } from '../rpc';
 vi.mock('../gen/robot/v1/robot_pb_service');
 
-import { Duration } from '@bufbuild/protobuf';
+import { DurationSchema } from '@bufbuild/protobuf/wkt';
 import {
   ConnectError,
   createRouterTransport,
   type Transport,
 } from '@connectrpc/connect';
-import { RobotService } from '../gen/robot/v1/robot_connect';
-import {
-  SendSessionHeartbeatResponse,
-  StartSessionResponse,
-} from '../gen/robot/v1/robot_pb';
+import { RobotService } from '../gen/robot/v1/robot_pb';
+import { SendSessionHeartbeatResponseSchema, StartSessionResponseSchema } from '../gen/robot/v1/robot_pb';
 import SessionManager from './session-manager';
 
 let mockTransport: Transport;
 let sm: SessionManager;
 
-const mockGetHeartBeatWindow = new Duration({
+const mockGetHeartBeatWindow = create(DurationSchema, {
   seconds: BigInt(1),
   nanos: 1,
 });
@@ -48,7 +46,7 @@ describe('SessionManager', () => {
     mockTransport = createRouterTransport(({ service }) => {
       service(RobotService, {
         startSession: () => {
-          return new StartSessionResponse({
+          return create(StartSessionResponseSchema, {
             id: 'some-sid',
           });
         },
@@ -70,17 +68,17 @@ describe('SessionManager', () => {
         startSession: () => {
           if (!once) {
             once = true;
-            return new StartSessionResponse({
+            return create(StartSessionResponseSchema, {
               id: expectedSID,
               heartbeatWindow: mockGetHeartBeatWindow,
             });
           }
-          return new StartSessionResponse({
+          return create(StartSessionResponseSchema, {
             id: 'another-sid',
             heartbeatWindow: mockGetHeartBeatWindow,
           });
         },
-        sendSessionHeartbeat: () => new SendSessionHeartbeatResponse(),
+        sendSessionHeartbeat: () => create(SendSessionHeartbeatResponseSchema),
       });
     });
 
@@ -103,17 +101,17 @@ describe('SessionManager', () => {
         startSession: () => {
           if (!once) {
             once = true;
-            return new StartSessionResponse({
+            return create(StartSessionResponseSchema, {
               id: initialSID,
               heartbeatWindow: mockGetHeartBeatWindow,
             });
           }
-          return new StartSessionResponse({
+          return create(StartSessionResponseSchema, {
             id: afterResetSID,
             heartbeatWindow: mockGetHeartBeatWindow,
           });
         },
-        sendSessionHeartbeat: () => new SendSessionHeartbeatResponse(),
+        sendSessionHeartbeat: () => create(SendSessionHeartbeatResponseSchema),
       });
     });
 
@@ -142,12 +140,12 @@ describe('SessionManager', () => {
         startSession: () => {
           if (!startOnce) {
             startOnce = true;
-            return new StartSessionResponse({
+            return create(StartSessionResponseSchema, {
               id: initialSID,
               heartbeatWindow: mockGetHeartBeatWindow,
             });
           }
-          return new StartSessionResponse({
+          return create(StartSessionResponseSchema, {
             id: afterResetSID,
             heartbeatWindow: mockGetHeartBeatWindow,
           });
@@ -157,7 +155,7 @@ describe('SessionManager', () => {
             sendOnce = true;
             throw ConnectError.from(new ConnectionClosedError('closed'));
           }
-          return new SendSessionHeartbeatResponse();
+          return create(SendSessionHeartbeatResponseSchema);
         },
       });
     });

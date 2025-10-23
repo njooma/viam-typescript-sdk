@@ -1,15 +1,19 @@
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { MotionService } from '../../gen/service/motion/v1/motion_connect';
+import { MotionService } from '../../gen/service/motion/v1/motion_pb';
+
 import {
-  GetPlanRequest,
-  GetPoseRequest,
-  ListPlanStatusesRequest,
-  MoveOnGlobeRequest,
-  MoveOnMapRequest,
-  MoveRequest,
-  StopPlanRequest,
+  GetPlanRequestSchema,
+  GetPoseRequestSchema,
+  ListPlanStatusesRequestSchema,
+  MoveOnGlobeRequestSchema,
+  MoveOnMapRequestSchema,
+  MoveRequestSchema,
+  StopPlanRequestSchema,
 } from '../../gen/service/motion/v1/motion_pb';
+
 import type { RobotClient } from '../../robot';
 import type {
   GeoGeometry,
@@ -50,13 +54,13 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new MoveRequest({
+    const request = create(MoveRequestSchema, {
       name: this.name,
       destination,
       componentName,
       worldState,
       constraints,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -74,14 +78,14 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new MoveOnMapRequest({
+    const request = create(MoveOnMapRequestSchema, {
       name: this.name,
       destination,
       componentName,
       slamServiceName,
       motionConfiguration: motionConfig,
       obstacles,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -101,7 +105,7 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new MoveOnGlobeRequest({
+    const request = create(MoveOnGlobeRequestSchema, {
       name: this.name,
       destination,
       componentName,
@@ -110,7 +114,7 @@ export class MotionClient implements Motion {
       obstacles: obstaclesList,
       boundingRegions: boundingRegionsList,
       motionConfiguration: motionConfig,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -124,10 +128,10 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new StopPlanRequest({
+    const request = create(StopPlanRequestSchema, {
       name: this.name,
       componentName,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -143,12 +147,12 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetPlanRequest({
+    const request = create(GetPlanRequestSchema, {
       name: this.name,
       componentName,
       lastPlanOnly,
       executionId,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -161,10 +165,10 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new ListPlanStatusesRequest({
+    const request = create(ListPlanStatusesRequestSchema, {
       name: this.name,
       onlyActivePlans,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -179,12 +183,12 @@ export class MotionClient implements Motion {
     extra = {},
     callOptions = this.callOptions
   ) {
-    const request = new GetPoseRequest({
+    const request = create(GetPoseRequestSchema, {
       name: this.name,
       componentName,
       destinationFrame,
       supplementalTransforms,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);

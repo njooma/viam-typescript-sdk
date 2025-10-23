@@ -1,43 +1,63 @@
 import {
-  Struct,
-  Timestamp,
+  create,
+  fromJson,
   type JsonValue,
-  type PartialMessage,
+  type MessageInitShape,
 } from '@bufbuild/protobuf';
+import {
+  StructSchema,
+  timestampFromDate,
+  timestampDate,
+  type Struct,
+} from '@bufbuild/protobuf/wkt';
 import { createClient, type Client, type Transport } from '@connectrpc/connect';
 import { BSON } from 'bsonfy';
-import { DataService } from '../gen/app/data/v1/data_connect';
+import { DataService } from '../gen/app/data/v1/data_pb';
+
 import {
-  BinaryID,
-  CaptureInterval,
-  CaptureMetadata,
-  Filter,
-  Index,
+  CaptureIntervalSchema,
+  CaptureMetadataSchema,
+  FilterSchema,
   IndexableCollection,
   Order,
-  TabularDataSource,
+  TabularDataSourceSchema,
   TabularDataSourceType,
-  TagsFilter,
+  TagsFilterSchema,
+  type Index,
 } from '../gen/app/data/v1/data_pb';
-import { DataPipelinesService } from '../gen/app/datapipelines/v1/data_pipelines_connect';
+
+import type {
+  CaptureMetadata,
+  Filter,
+  TabularDataSource,
+} from '../gen/app/data/v1/data_pb';
+
 import {
-  DataPipeline,
-  DataPipelineRun,
+  DataPipelinesService,
+  type DataPipeline,
+  type DataPipelineRun,
 } from '../gen/app/datapipelines/v1/data_pipelines_pb';
-import { DatasetService } from '../gen/app/dataset/v1/dataset_connect';
 import type { Dataset as PBDataset } from '../gen/app/dataset/v1/dataset_pb';
-import { DataSyncService } from '../gen/app/datasync/v1/data_sync_connect';
+import { DatasetService } from '../gen/app/dataset/v1/dataset_pb';
+import { DataSyncService } from '../gen/app/datasync/v1/data_sync_pb';
+
 import {
-  DataCaptureUploadRequest,
+  DataCaptureUploadRequestSchema,
   DataType,
-  FileData,
+  FileDataSchema,
+  FileUploadRequestSchema,
+  SensorDataSchema,
+  SensorMetadataSchema,
+  UploadMetadataSchema,
+} from '../gen/app/datasync/v1/data_sync_pb';
+
+import type {
   FileUploadRequest,
   SensorData,
-  SensorMetadata,
   UploadMetadata,
 } from '../gen/app/datasync/v1/data_sync_pb';
 
-export type FilterOptions = Partial<Filter> & {
+export type FilterOptions = Filter & {
   endTime?: Date;
   startTime?: Date;
   tags?: string[];
@@ -107,13 +127,6 @@ export type Dataset = Partial<PBDataset> & {
   created?: Date;
 };
 
-const logDeprecationWarning = () => {
-  // eslint-disable-next-line no-console
-  console.warn(
-    'The BinaryID type is deprecated and will be removed in a future release. Please migrate to the BinaryDataId field instead.'
-  );
-};
-
 export class DataClient {
   private dataClient: Client<typeof DataService>;
   private datasetClient: Client<typeof DatasetService>;
@@ -168,17 +181,12 @@ export class DataClient {
     endTime?: Date,
     additionalParams?: Record<string, JsonValue>
   ) {
-    const interval = new CaptureInterval();
+    const interval = create(CaptureIntervalSchema);
     if (startTime) {
-      interval.start = Timestamp.fromDate(startTime);
+      interval.start = timestampFromDate(startTime);
     }
     if (endTime) {
-      interval.end = Timestamp.fromDate(endTime);
-    }
-
-    let additionalParameters: Struct | undefined;
-    if (additionalParams) {
-      additionalParameters = Struct.fromJson(additionalParams);
+      interval.end = timestampFromDate(endTime);
     }
 
     const req = {
@@ -187,7 +195,7 @@ export class DataClient {
       resourceSubtype,
       methodName,
       interval,
-      additionalParameters,
+      additionalParams,
     };
 
     const responses = this.dataClient.exportTabularData(req);
@@ -200,15 +208,15 @@ export class DataClient {
         resourceName: response.resourceName,
         resourceSubtype: response.resourceSubtype,
         methodName: response.methodName,
-        timeCaptured: response.timeCaptured!.toDate(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        timeCaptured: timestampDate(response.timeCaptured!), // eslint-disable-line @typescript-eslint/no-non-null-assertion
         organizationId: response.organizationId,
         locationId: response.locationId,
         robotName: response.robotName,
         robotId: response.robotId,
         partName: response.partName,
-        methodParameters: response.methodParameters!.toJson(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        methodParameters: response.methodParameters!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
         tags: response.tags,
-        payload: response.payload!.toJson(), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        payload: response.payload!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
       });
     }
 
@@ -296,7 +304,7 @@ export class DataClient {
       useRecentData &&
       (!dataSource || dataSource.type === TabularDataSourceType.UNSPECIFIED)
     ) {
-      dataSource = new TabularDataSource({
+      dataSource = create(TabularDataSourceSchema, {
         type: TabularDataSourceType.HOT_STORAGE,
       });
     }
@@ -376,13 +384,17 @@ export class DataClient {
         const mdIndex = data.metadataIndex;
         const metadata =
           mdListLength !== 0 && mdIndex >= mdListLength
-            ? new CaptureMetadata()
+            ? create(CaptureMetadataSchema)
             : response.metadata[mdIndex];
         return {
-          data: data.data?.toJson(),
+          data: data.data,
           metadata,
-          timeRequested: data.timeRequested?.toDate(),
-          timeReceived: data.timeRequested?.toDate(),
+          timeRequested: data.timeRequested
+            ? timestampDate(data.timeRequested)
+            : undefined,
+          timeReceived: data.timeRequested
+            ? timestampDate(data.timeRequested)
+            : undefined,
         };
       })
     );
@@ -480,17 +492,9 @@ export class DataClient {
    * @param ids The IDs of the requested binary data
    * @returns An array of data objects
    */
-  async binaryDataByIds(ids: string[] | BinaryID[]) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      const resp = await this.dataClient.binaryDataByIDs({
-        binaryDataIds: ids as string[],
-        includeBinary: true,
-      });
-      return resp.data;
-    }
-    logDeprecationWarning();
+  async binaryDataByIds(ids: string[]) {
     const resp = await this.dataClient.binaryDataByIDs({
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
       includeBinary: true,
     });
     return resp.data;
@@ -575,16 +579,9 @@ export class DataClient {
    * @param ids The IDs of the data to be deleted. Must be non-empty.
    * @returns The number of items deleted
    */
-  async deleteBinaryDataByIds(ids: string[] | BinaryID[]) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      const resp = await this.dataClient.deleteBinaryDataByIDs({
-        binaryDataIds: ids as string[],
-      });
-      return resp.deletedCount;
-    }
-    logDeprecationWarning();
+  async deleteBinaryDataByIds(ids: string[]) {
     const resp = await this.dataClient.deleteBinaryDataByIDs({
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
     });
     return resp.deletedCount;
   }
@@ -610,18 +607,10 @@ export class DataClient {
    *   non-empty.
    * @param ids The IDs of the data to be tagged. Must be non-empty.
    */
-  async addTagsToBinaryDataByIds(tags: string[], ids: string[] | BinaryID[]) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      await this.dataClient.addTagsToBinaryDataByIDs({
-        tags,
-        binaryDataIds: ids as string[],
-      });
-      return;
-    }
-    logDeprecationWarning();
+  async addTagsToBinaryDataByIds(tags: string[], ids: string[]) {
     await this.dataClient.addTagsToBinaryDataByIDs({
       tags,
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
     });
   }
 
@@ -677,21 +666,10 @@ export class DataClient {
    * @param ids The IDs of the data to be edited. Must be non-empty.
    * @returns The number of items deleted
    */
-  async removeTagsFromBinaryDataByIds(
-    tags: string[],
-    ids: string[] | BinaryID[]
-  ) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      const resp = await this.dataClient.removeTagsFromBinaryDataByIDs({
-        tags,
-        binaryDataIds: ids as string[],
-      });
-      return resp.deletedCount;
-    }
-    logDeprecationWarning();
+  async removeTagsFromBinaryDataByIds(tags: string[], ids: string[]) {
     const resp = await this.dataClient.removeTagsFromBinaryDataByIDs({
       tags,
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
     });
     return resp.deletedCount;
   }
@@ -786,27 +764,15 @@ export class DataClient {
    * @returns The bounding box ID
    */
   async addBoundingBoxToImageById(
-    binaryId: string | BinaryID,
+    binaryId: string,
     label: string,
     xMinNormalized: number,
     yMinNormalized: number,
     xMaxNormalized: number,
     yMaxNormalized: number
   ) {
-    if (typeof binaryId === 'string') {
-      const resp = await this.dataClient.addBoundingBoxToImageByID({
-        binaryDataId: binaryId,
-        label,
-        xMinNormalized,
-        yMinNormalized,
-        xMaxNormalized,
-        yMaxNormalized,
-      });
-      return resp.bboxId;
-    }
-    logDeprecationWarning();
     const resp = await this.dataClient.addBoundingBoxToImageByID({
-      binaryId,
+      binaryDataId: binaryId,
       label,
       xMinNormalized,
       yMinNormalized,
@@ -834,20 +800,9 @@ export class DataClient {
    * @param binId The ID of the image to remove the bounding box from
    * @param bboxId The ID of the bounding box to remove
    */
-  async removeBoundingBoxFromImageById(
-    binId: string | BinaryID,
-    bboxId: string
-  ) {
-    if (typeof binId === 'string') {
-      await this.dataClient.removeBoundingBoxFromImageByID({
-        binaryDataId: binId,
-        bboxId,
-      });
-      return;
-    }
-    logDeprecationWarning();
+  async removeBoundingBoxFromImageById(binId: string, bboxId: string) {
     await this.dataClient.removeBoundingBoxFromImageByID({
-      binaryId: binId,
+      binaryDataId: binId,
       bboxId,
     });
   }
@@ -945,20 +900,9 @@ export class DataClient {
    * @param ids The IDs of binary data to add to dataset
    * @param datasetId The ID of the dataset to be added to
    */
-  async addBinaryDataToDatasetByIds(
-    ids: string[] | BinaryID[],
-    datasetId: string
-  ) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      await this.dataClient.addBinaryDataToDatasetByIDs({
-        binaryDataIds: ids as string[],
-        datasetId,
-      });
-      return;
-    }
-    logDeprecationWarning();
+  async addBinaryDataToDatasetByIds(ids: string[], datasetId: string) {
     await this.dataClient.addBinaryDataToDatasetByIDs({
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
       datasetId,
     });
   }
@@ -983,20 +927,9 @@ export class DataClient {
    * @param ids The IDs of the binary data to remove from dataset
    * @param datasetId The ID of the dataset to be removed from
    */
-  async removeBinaryDataFromDatasetByIds(
-    ids: string[] | BinaryID[],
-    datasetId: string
-  ) {
-    if (Array.isArray(ids) && typeof ids[0] === 'string') {
-      await this.dataClient.removeBinaryDataFromDatasetByIDs({
-        binaryDataIds: ids as string[],
-        datasetId,
-      });
-      return;
-    }
-    logDeprecationWarning();
+  async removeBinaryDataFromDatasetByIds(ids: string[], datasetId: string) {
     await this.dataClient.removeBinaryDataFromDatasetByIDs({
-      binaryIds: ids as BinaryID[],
+      binaryDataIds: ids,
       datasetId,
     });
   }
@@ -1094,7 +1027,7 @@ export class DataClient {
     });
     return resp.datasets.map((ds) => {
       return {
-        created: ds.timeCreated?.toDate(),
+        created: ds.timeCreated ? timestampDate(ds.timeCreated) : undefined,
         ...ds,
       };
     });
@@ -1123,7 +1056,7 @@ export class DataClient {
     });
     return resp.datasets.map((ds) => {
       return {
-        created: ds.timeCreated?.toDate(),
+        created: ds.timeCreated ? timestampDate(ds.timeCreated) : undefined,
         ...ds,
       };
     });
@@ -1194,7 +1127,7 @@ export class DataClient {
       throw new Error('dataRequestTimes and data lengths must be equal.');
     }
 
-    const metadata = new UploadMetadata({
+    const metadata = create(UploadMetadataSchema, {
       partId,
       componentType,
       componentName,
@@ -1205,24 +1138,24 @@ export class DataClient {
 
     const sensorContents: SensorData[] = [];
     for (const [i, data] of tabularData.entries()) {
-      const sensorMetadata = new SensorMetadata();
+      const sensorMetadata = create(SensorMetadataSchema);
       const dates = dataRequestTimes[i];
       if (dates) {
-        sensorMetadata.timeRequested = Timestamp.fromDate(dates[0]);
-        sensorMetadata.timeReceived = Timestamp.fromDate(dates[1]);
+        sensorMetadata.timeRequested = timestampFromDate(dates[0]);
+        sensorMetadata.timeReceived = timestampFromDate(dates[1]);
       }
       sensorContents.push(
-        new SensorData({
+        create(SensorDataSchema, {
           metadata: sensorMetadata,
           data: {
             case: 'struct',
-            value: Struct.fromJson(data),
+            value: data,
           },
         })
       );
     }
 
-    const req = new DataCaptureUploadRequest({
+    const req = create(DataCaptureUploadRequestSchema, {
       metadata,
       sensorContents,
     });
@@ -1284,7 +1217,7 @@ export class DataClient {
     tags?: string[],
     datasetIds?: string[]
   ) {
-    const metadata = new UploadMetadata({
+    const metadata = create(UploadMetadataSchema, {
       partId,
       componentType,
       componentName,
@@ -1295,10 +1228,10 @@ export class DataClient {
       datasetIds,
     });
 
-    const sensorData = new SensorData({
+    const sensorData = create(SensorDataSchema, {
       metadata: {
-        timeRequested: Timestamp.fromDate(dataRequestTimes[0]),
-        timeReceived: Timestamp.fromDate(dataRequestTimes[1]),
+        timeRequested: timestampFromDate(dataRequestTimes[0]),
+        timeReceived: timestampFromDate(dataRequestTimes[1]),
       },
       data: {
         case: 'binary',
@@ -1306,7 +1239,7 @@ export class DataClient {
       },
     });
 
-    const req = new DataCaptureUploadRequest({
+    const req = create(DataCaptureUploadRequestSchema, {
       metadata,
       sensorContents: [sensorData],
     });
@@ -1348,7 +1281,7 @@ export class DataClient {
     partId: string,
     options?: FileUploadOptions
   ) {
-    const md = new UploadMetadata({
+    const md = create(UploadMetadataSchema, {
       partId,
       type: DataType.FILE,
       ...options,
@@ -1371,8 +1304,8 @@ export class DataClient {
   private static async *fileUploadRequests(
     metadata: UploadMetadata,
     data: Uint8Array
-  ): AsyncGenerator<PartialMessage<FileUploadRequest>> {
-    yield new FileUploadRequest({
+  ): AsyncGenerator<FileUploadRequest> {
+    yield create(FileUploadRequestSchema, {
       uploadPacket: {
         case: 'metadata',
         value: metadata,
@@ -1383,30 +1316,30 @@ export class DataClient {
       if (end > data.length) {
         end = data.length;
       }
-      yield new FileUploadRequest({
+      yield create(FileUploadRequestSchema, {
         uploadPacket: {
           case: 'fileContents',
-          value: new FileData({ data: data.slice(i, end) }),
+          value: create(FileDataSchema, { data: data.slice(i, end) }),
         },
       });
     }
   }
 
   static createFilter(options: FilterOptions): Filter {
-    const filter = new Filter(options);
+    const filter = create(FilterSchema, options);
 
     if (options.startTime ?? options.endTime) {
-      const interval = new CaptureInterval();
+      const interval = create(CaptureIntervalSchema);
       if (options.startTime) {
-        interval.start = Timestamp.fromDate(options.startTime);
+        interval.start = timestampFromDate(options.startTime);
       }
       if (options.endTime) {
-        interval.end = Timestamp.fromDate(options.endTime);
+        interval.end = timestampFromDate(options.endTime);
       }
       filter.interval = interval;
     }
 
-    const tagsFilter = new TagsFilter();
+    const tagsFilter = create(TagsFilterSchema);
     if (options.tags) {
       tagsFilter.tags = options.tags;
       filter.tagsFilter = tagsFilter;
@@ -1450,17 +1383,12 @@ export class DataClient {
     methodName: string,
     additionalParams?: Record<string, JsonValue>
   ): Promise<[Date, Date, Record<string, JsonValue>] | null> {
-    let additionalParameters: Struct | undefined;
-    if (additionalParams) {
-      additionalParameters = Struct.fromJson(additionalParams);
-    }
-
     const resp = await this.dataClient.getLatestTabularData({
       partId,
       resourceName,
       resourceSubtype,
       methodName,
-      additionalParameters,
+      additionalParameters: additionalParams,
     });
 
     if (!resp.payload || !resp.timeCaptured || !resp.timeSynced) {
@@ -1468,9 +1396,9 @@ export class DataClient {
     }
 
     return [
-      resp.timeCaptured.toDate(),
-      resp.timeSynced.toDate(),
-      resp.payload.toJson() as Record<string, JsonValue>,
+      timestampDate(resp.timeCaptured),
+      timestampDate(resp.timeSynced),
+      resp.payload,
     ];
   }
 

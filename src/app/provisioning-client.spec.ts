@@ -1,18 +1,21 @@
 // @vitest-environment happy-dom
 
 import { createRouterTransport, type Transport } from '@connectrpc/connect';
+import { create } from '@bufbuild/protobuf';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ProvisioningService } from '../gen/provisioning/v1/provisioning_connect';
+import { ProvisioningService } from '../gen/provisioning/v1/provisioning_pb';
+
 import {
-  CloudConfig,
-  GetNetworkListResponse,
-  GetSmartMachineStatusResponse,
-  NetworkInfo,
+  CloudConfigSchema,
+  GetNetworkListResponseSchema,
+  GetSmartMachineStatusResponseSchema,
+  NetworkInfoSchema,
   SetNetworkCredentialsRequest,
-  SetNetworkCredentialsResponse,
+  SetNetworkCredentialsResponseSchema,
   SetSmartMachineCredentialsRequest,
-  SetSmartMachineCredentialsResponse,
+  SetSmartMachineCredentialsResponseSchema,
 } from '../gen/provisioning/v1/provisioning_pb';
+
 import { ProvisioningClient } from './provisioning-client';
 
 let mockTransport: Transport;
@@ -23,7 +26,7 @@ const testProvisioningInfo = {
   model: 'model',
   manufacturer: 'manufacturer',
 };
-const testNetworkInfo = new NetworkInfo({
+const testNetworkInfo = create(NetworkInfoSchema, {
   type: 'type',
   ssid: 'ssid',
   security: 'security',
@@ -31,7 +34,7 @@ const testNetworkInfo = new NetworkInfo({
   connected: true,
   lastError: 'last error',
 });
-const testSmartMachineStatus = new GetSmartMachineStatusResponse({
+const testSmartMachineStatus = create(GetSmartMachineStatusResponseSchema, {
   provisioningInfo: testProvisioningInfo,
   hasSmartMachineCredentials: true,
   isOnline: true,
@@ -41,7 +44,7 @@ const testSmartMachineStatus = new GetSmartMachineStatusResponse({
 const type = 'type';
 const ssid = 'ssid';
 const psk = 'psk';
-const cloud = new CloudConfig({
+const cloud = create(CloudConfigSchema, {
   id: 'id',
   secret: 'secret',
   appAddress: 'app_address',
@@ -55,17 +58,17 @@ describe('ProvisioningClient tests', () => {
       service(ProvisioningService, {
         getSmartMachineStatus: () => testSmartMachineStatus,
         getNetworkList: () => {
-          return new GetNetworkListResponse({
+          return create(GetNetworkListResponseSchema, {
             networks: [testNetworkInfo],
           });
         },
         setNetworkCredentials: (req) => {
           setNetworkCredentialsReq = req;
-          return new SetNetworkCredentialsResponse();
+          return create(SetNetworkCredentialsResponseSchema);
         },
         setSmartMachineCredentials: (req) => {
           setSmartMachineCredentialsReq = req;
-          return new SetSmartMachineCredentialsResponse();
+          return create(SetSmartMachineCredentialsResponseSchema);
         },
       });
     });

@@ -1,13 +1,12 @@
 import type { RobotClient } from '../../robot';
 import type { Options } from '../../types';
 
-import { Struct, type JsonValue } from '@bufbuild/protobuf';
+import { type JsonValue, create, fromJson } from '@bufbuild/protobuf';
+import { StructSchema } from '@bufbuild/protobuf/wkt';
+import type { Struct } from '@bufbuild/protobuf/wkt';
 import type { CallOptions, Client } from '@connectrpc/connect';
-import { InputControllerService } from '../../gen/component/inputcontroller/v1/input_controller_connect';
-import {
-  GetEventsRequest,
-  TriggerEventRequest,
-} from '../../gen/component/inputcontroller/v1/input_controller_pb';
+import { InputControllerService } from '../../gen/component/inputcontroller/v1/input_controller_pb';
+import { GetEventsRequestSchema, TriggerEventRequestSchema } from '../../gen/component/inputcontroller/v1/input_controller_pb';
 import { doCommandFromClient } from '../../utils';
 import type { InputController, InputControllerEvent } from './input-controller';
 
@@ -29,9 +28,9 @@ export class InputControllerClient implements InputController {
   }
 
   async getEvents(extra = {}, callOptions = this.callOptions) {
-    const request = new GetEventsRequest({
+    const request = create(GetEventsRequestSchema, {
       controller: this.name,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
@@ -45,10 +44,10 @@ export class InputControllerClient implements InputController {
     extra = {},
     callOptions = this.callOptions
   ): Promise<void> {
-    const request = new TriggerEventRequest({
+    const request = create(TriggerEventRequestSchema, {
       controller: this.name,
       event,
-      extra: Struct.fromJson(extra),
+      extra: fromJson(StructSchema, extra),
     });
 
     this.options.requestLogger?.(request);
